@@ -9,10 +9,9 @@
   "dependencies": {
     "discord.js": "^14.14.1",
     "distube": "^4.1.0",
-    "@distube/yt-dlp": "^12.1.0"
+    "@distube/yt-dlp": "latest"
   },
   "engines": {
     "node": ">=18.x"
   }
 }
-

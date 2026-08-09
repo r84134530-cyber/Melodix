@@ -1,4 +1,5 @@
 import os
+import time
 import asyncio
 from flask import Flask
 from threading import Thread
@@ -6,7 +7,7 @@ import discord
 from discord.ext import commands
 import yt_dlp
 
-# --- 1. SERVER WEB PERSISTENT PENTRU RENDER ---
+# --- 1. SERVER WEB PENTRU RENDER ---
 app = Flask('')
 
 @app.route('/')
@@ -28,7 +29,6 @@ intents.voice_states = True
 
 bot = commands.Bot(command_prefix='!', intents=intents)
 
-# Setări yt-dlp optimizate pentru a evita blocajele
 ytdl_format_options = {
     'format': 'bestaudio/best',
     'noplaylist': True,
@@ -43,7 +43,6 @@ ytdl = yt_dlp.YoutubeDL(ytdl_format_options)
 class YTDLSource(discord.PCMVolumeTransformer):
     def __init__(self, source, *, data, volume=0.5):
         super().__init__(source, volume)
-        data.get('title')
 
     @classmethod
     async def from_url(cls, url, *, loop=None):
@@ -54,12 +53,11 @@ class YTDLSource(discord.PCMVolumeTransformer):
             data = data['entries'][0]
 
         filename = data['url']
-        # Folosim FFmpeg sau stream direct prin URL-ul extras de yt-dlp
         return cls(discord.FFmpegPCMAudio(filename, executable="ffmpeg", options="-vn"), data=data)
 
 @bot.event
 async def on_ready():
-    print(f'✅ [DISCORD] Botul este online ca {bot.user.name}!')
+    print(f'✅ [DISCORD] Botul este online și conectat ca {bot.user.name}!')
 
 @bot.command(name='connect')
 async def connect(ctx):
@@ -108,12 +106,23 @@ async def stop(ctx):
     else:
         await ctx.send("❌ Botul nu este conectat pe niciun canal.")
 
-# --- 3. PORNIRE ---
+# --- 3. PORNIRE CU PROTECȚIE LA EROAREA 429 ---
 if __name__ == "__main__":
     keep_alive()
     TOKEN = os.environ.get('DISCORD_TOKEN')
+    
     if not TOKEN:
         print("❌ EROARE: DISCORD_TOKEN nu este setat!")
     else:
-        bot.run(TOKEN)
-    
+        print("🔄 Încerc conectarea la Discord...")
+        while True:
+            try:
+                bot.run(TOKEN)
+                break
+            except discord.errors.HTTPException as e:
+                if e.status == 429:
+                    print("⚠️ Primit cod 429 (Too Many Requests). Aștept 30 de secunde înainte de reconectare...")
+                    time.sleep(30)
+                else:
+                    raise e
+                    

@@ -3,18 +3,19 @@ const { DisTube } = require('distube');
 const { YtDlpPlugin } = require('@distube/yt-dlp');
 const express = require('express');
 
-// Creăm un mic server web pentru a ține portul deschis pe Render
+// 1. Pornim serverul web pentru a ține portul deschis pe Render
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 10000;
 
 app.get('/', (req, res) => {
     res.send('Melodix Bot este online și funcționează!');
 });
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
     console.log(`Serverul web rulează pe portul ${PORT}`);
 });
 
+// 2. Inițializăm botul de Discord
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -105,4 +106,9 @@ client.on('messageCreate', async message => {
     }
 });
 
-client.login(process.env.DISCORD_TOKEN);
+// 3. Autentificarea botului pe Discord folosind tokenul
+if (!process.env.DISCORD_TOKEN) {
+    console.error("❌ EROARE: DISCORD_TOKEN nu este setat în variabilele de mediu de pe Render!");
+} else {
+    client.login(process.env.DISCORD_TOKEN);
+}

@@ -1,6 +1,19 @@
 const { Client, GatewayIntentBits } = require('discord.js');
 const { DisTube } = require('distube');
 const { YtDlpPlugin } = require('@distube/yt-dlp');
+const express = require('express');
+
+// Creăm un mic server web pentru a ține portul deschis pe Render
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.get('/', (req, res) => {
+    res.send('Melodix Bot este online și funcționează!');
+});
+
+app.listen(PORT, () => {
+    console.log(`Serverul web rulează pe portul ${PORT}`);
+});
 
 const client = new Client({
     intents: [
@@ -23,11 +36,10 @@ client.once('ready', () => {
     console.log(`Botul este online ca ${client.user.tag}!`);
 });
 
-// PREVENIRE CRASH: Dacă YouTube blochează temporar IP-ul, botul va trimite mesaj în chat în loc să se oprească
 distube.on('error', (channel, error) => {
     console.error('Eroare DisTube:', error);
     if (channel) {
-        channel.send(`❌ A apărut o eroare la redare (Posibil blocaj temporar YouTube: 429). Încearcă din nou.`);
+        channel.send(`❌ A apărut o eroare la redare. Încearcă din nou.`);
     }
 });
 
@@ -40,7 +52,7 @@ client.on('messageCreate', async message => {
     const voiceChannel = message.member.voice.channel;
 
     if (command === 'connect') {
-        if (!voiceChannel) return message.reply('❌ Trebuie să fii într-on canal vocal!');
+        if (!voiceChannel) return message.reply('❌ Trebuie să fii într-un canal vocal!');
         try {
             distube.voices.join(voiceChannel);
             message.reply(`✅ M-am conectat în canalul: **${voiceChannel.name}**`);
